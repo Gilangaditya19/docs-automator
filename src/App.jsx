@@ -6,7 +6,6 @@ import { parseFile, exportToExcel } from './utils/fileParser';
 import HowItWorks from './components/ui/how-it-works';
 
 export default function App() {
-  // uploadedFiles: array of { filename, parsed } objects
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
   const [history, setHistory] = useState([]);
@@ -37,7 +36,6 @@ export default function App() {
     }
   ];
 
-  // Customizable extra columns
   const [extraColumns, setExtraColumns] = useState([
     { id: 1, name: "Dokumentasi" },
     { id: 2, name: "Harga Perolehan" },
@@ -46,7 +44,6 @@ export default function App() {
     { id: 5, name: "Laporan BKU" }
   ]);
 
-  // Load History & Presets from LocalStorage
   useEffect(() => {
     const savedHistory = localStorage.getItem('rpd_history_v3');
     if (savedHistory) setHistory(JSON.parse(savedHistory));
@@ -82,21 +79,20 @@ export default function App() {
 
       for (const file of acceptedFiles) {
         const result = await parseFile(file);
-        // Map each sheet to a separate file entry in the UI
         result.sheets.forEach(sheetObj => {
            newFiles.push({
              filename: `${file.name} - ${sheetObj.sheetName}`,
              parsed: {
                ...sheetObj,
                rawBuffer: result.rawBuffer,
-               sheetObj: sheetObj // keep reference for export logic
+               sheetObj: sheetObj
              }
            });
         });
       }
 
       setUploadedFiles(prev => [...prev, ...newFiles]);
-      setActiveFileIndex(uploadedFiles.length); // Switch to first newly added file
+      setActiveFileIndex(uploadedFiles.length);
 
       const totalRows = newFiles.reduce((sum, f) => {
         if (f.parsed.type === 'structured') {
@@ -141,7 +137,6 @@ export default function App() {
     setActiveFileIndex(0);
   };
 
-  // Get display data for the active file
   const getActiveDisplayData = () => {
     if (uploadedFiles.length === 0) return null;
     const file = uploadedFiles[activeFileIndex];
@@ -155,17 +150,14 @@ export default function App() {
       if (headerRowIndex < 0) return null;
 
       const headerRow = allRows[headerRowIndex] || [];
-      // Build display headers: meaningful columns from original + extra columns
       const trimmedHeaders = headerRow.slice(0, lastMeaningfulCol);
       const extendedHeaders = [...trimmedHeaders, ...extraColumns.map(c => c.name)];
 
-      // Build display rows: only the actual data rows (between dataStartRow and dataEndRow)
       const displayRows = [];
       for (let i = dataStartRow; i < dataEndRow; i++) {
         const row = allRows[i] || [];
         const trimmed = row.slice(0, lastMeaningfulCol);
         while (trimmed.length < lastMeaningfulCol) trimmed.push('');
-        // Add empty cells for extra columns
         extraColumns.forEach(() => trimmed.push(''));
         displayRows.push(trimmed);
       }
@@ -177,7 +169,6 @@ export default function App() {
         researcherName: parsed.researcherName || file.filename
       };
     } else {
-      // Raw/fallback (PDF etc.)
       const rawData = Array.isArray(parsed) ? parsed : [];
       if (rawData.length === 0) return null;
       const headers = [...rawData[0], ...extraColumns.map(c => c.name)];
@@ -231,7 +222,6 @@ export default function App() {
     <div className="min-h-screen bg-white text-brand-navy flex font-sans selection:bg-brand-blue selection:text-white">
       <Toaster position="top-center" />
 
-      {/* Sidebar History */}
       <div className={`fixed inset-y-0 left-0 bg-white border-r border-brand-sky w-80 transform transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-20 shadow-2xl ${isHistoryOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-8 h-full flex flex-col">
           <div className="flex justify-between items-center mb-8">
@@ -259,10 +249,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col transition-all duration-500">
 
-        {/* Navigation */}
         <nav className="px-4 lg:px-8 py-4 lg:py-6 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-brand-sky/50 backdrop-blur-md sticky top-0 z-10 animate-slide-down bg-white/80">
           <div className="flex items-center gap-3 hover:scale-105 transition-transform cursor-pointer" onClick={resetAll}>
             <div className="w-10 h-10 bg-brand-navy text-white flex items-center justify-center rounded-xl shadow-lg">
@@ -285,7 +273,6 @@ export default function App() {
           {!hasFiles ? (
             <div className="flex-1 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center justify-between">
               
-              {/* Left Column: Hero & Dropzone */}
               <div className="flex flex-col items-center lg:items-start justify-center text-center lg:text-left">
                 <div className="max-w-xl mb-12">
                   <h2 className="text-5xl lg:text-6xl font-serif leading-tight mb-6 animate-fade-up" style={{ animationDelay: '100ms' }}>
@@ -310,7 +297,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Right Column: HowItWorks Component */}
               <div className="hidden lg:block w-full h-full animate-fade-up" style={{ animationDelay: '500ms' }}>
                 <HowItWorks features={tutorialFeatures} className="!bg-transparent !py-0 !pt-0 !px-0" />
               </div>
@@ -318,7 +304,6 @@ export default function App() {
             </div>
           ) : (
             <div className="flex-1 flex flex-col">
-              {/* Action Bar */}
               <div className="flex justify-between items-start mb-6 animate-fade-up" style={{ animationDelay: '50ms' }}>
                 <div>
                   <h2 className="text-3xl font-serif mb-2">Pratinjau Hasil</h2>
@@ -344,7 +329,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* File Tabs */}
               <div className="flex gap-2 mb-4 overflow-x-auto pb-2 animate-fade-up" style={{ animationDelay: '100ms' }}>
                 {uploadedFiles.map((file, index) => {
                   const name = file.parsed.type === 'structured' && file.parsed.researcherName
@@ -375,10 +359,8 @@ export default function App() {
                 })}
               </div>
 
-              {/* Table Preview */}
               {activeDisplay && (
                 <div className="flex-1 bg-white rounded-3xl shadow-2xl border border-brand-sky/50 overflow-hidden flex flex-col animate-scale-up" style={{ animationDelay: '200ms' }}>
-                  {/* Researcher Info Bar */}
                   {uploadedFiles[activeFileIndex]?.parsed?.type === 'structured' && (
                     <div className="px-6 py-3 bg-brand-sky/20 border-b border-brand-sky/50 flex items-center gap-4 text-sm">
                       <span className="font-semibold">{activeDisplay.researcherName}</span>
@@ -434,7 +416,6 @@ export default function App() {
         </main>
       </div>
 
-      {/* Settings Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 bg-brand-navy/30 backdrop-blur-md z-50 flex items-center justify-center animate-fade-in">
           <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-lg w-full m-4 animate-scale-up" style={{ animationDelay: '100ms' }}>
@@ -488,7 +469,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Processing Overlay */}
       {isProcessing && (
         <div className="fixed inset-0 bg-brand-navy/20 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-4 animate-scale-up">

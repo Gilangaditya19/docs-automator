@@ -138,10 +138,6 @@ const parsePDFRaw = async (file) => {
 };
 
 export const exportToExcel = async (filesData, extraColumns) => {
-  // Option 3 Logic: We only expect ONE unified file with multiple sheets.
-  // If the user uploads multiple files, we still process them independently and output a zip,
-  // but if they follow instructions, they upload exactly 1 file with multiple sheets.
-  
   if (filesData.length === 0) return;
   
   let outputWorkbook = null;
@@ -163,8 +159,6 @@ export const exportToExcel = async (filesData, extraColumns) => {
   const isMultiple = uniqueBuffers.size > 1;
 
   if (isMultiple) {
-    // If they uploaded multiple files, we use ExcelJS to merge them into ONE file.
-    // WARNING: This completely destroys Picture in Cell (richData) images for all files.
     for (const fileEntry of filesData) {
       const { parsed, filename: srcFilename } = fileEntry;
 
@@ -302,11 +296,9 @@ export const exportToExcel = async (filesData, extraColumns) => {
     saveAs(new Blob([buffer]), outName);
 
   } else {
-    // SINGLE FILE - Multiple Sheets Processing
     const fileEntry = filesData[0];
     const { parsed, filename: srcFilename } = fileEntry;
     
-    // We modify the original file's buffer exactly as it is using xlsx-populate!
     const wb = await XlsxPopulate.fromDataAsync(parsed.rawBuffer);
     const extraColNames = extraColumns.map(c => c.name);
 
